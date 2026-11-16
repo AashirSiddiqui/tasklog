@@ -1,0 +1,5 @@
+# Ignore machine code created by compile.sh
+tasklog 
+
+# Ignore database
+main.db

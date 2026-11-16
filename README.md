@@ -1,6 +1,6 @@
-* Tasklog
+# Tasklog
 
-** Commands
+## Commands
 tasklog add task1, task2, ...
 tasklog view
 tasklog view today
