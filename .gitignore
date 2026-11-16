@@ -2,4 +2,4 @@
 tasklog 
 
 # Ignore database
-main.db
+*.db
