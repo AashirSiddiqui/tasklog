@@ -31,6 +31,26 @@ int add(sqlite3* db, char* taskName) {
     return returnCode;
 }
 
+int view_all(sqlite3* db) {
+    sqlite3_stmt *view;
+    sqlite3_prepare_v2(db, "SELECT * from main;", 32, &view, NULL);
+
+    printf(" ID | Name | Details | Date\n");
+    int returnCode;
+    while ((returnCode = sqlite3_step(view)) == SQLITE_ROW) {
+        int id = sqlite3_column_int(view, 0);
+        char* name = sqlite3_column_text(view, 1);
+        char* details = sqlite3_column_text(view, 2);
+        char* date = sqlite3_column_text(view, 3);
+        printf(" %d | %s | %s | %s \n", id, name, details, date);
+    }
+    printf("All tasks listed.\n");
+
+    sqlite3_finalize(view);
+
+    return returnCode;
+}
+
 int main(int argc, char *argv[]) {
     sqlite3 *db;
     char *unused;
@@ -100,7 +120,9 @@ int main(int argc, char *argv[]) {
             //     }
             // }
         }
-        if (strcmp(operation, "view") == 0) {}
+        if (strcmp(operation, "view") == 0) {
+            view_all(db);
+        }
         if (strcmp(operation, "complete") == 0) {}
     }
 
