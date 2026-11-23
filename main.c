@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdlib.h>
 
 // void remove_leading_spaces(char* string) {
 //     int i = 0;
@@ -31,6 +32,20 @@ int add(sqlite3* db, char* taskName) {
     return returnCode;
 }
 
+int complete(sqlite3* db, int taskID) {
+    printf("Completing task %d...\n", taskID);
+    sqlite3_stmt *completeTask;
+    sqlite3_prepare_v2(db, "DELETE FROM main WHERE id = ?;", 40, &completeTask, NULL);
+    sqlite3_bind_int(completeTask, 1, taskID);
+    
+    int returnCode = sqlite3_step(completeTask);
+
+    sqlite3_finalize(completeTask);
+
+    printf("%d\n", returnCode);
+    return returnCode;
+}
+
 int view_all(sqlite3* db) {
     sqlite3_stmt *view;
     sqlite3_prepare_v2(db, "SELECT * from main;", 32, &view, NULL);
@@ -57,7 +72,7 @@ int main(int argc, char *argv[]) {
     int returnCode;
     int code = sqlite3_open("main.db", &db);
 
-    printf("Opening database: Return code %d\n\n", code);
+    // printf("Opening database: Return code %d\n\n", code);
     sqlite3_stmt *createTable;
     sqlite3_stmt *tableExists; 
     sqlite3_prepare_v2(db, "SELECT name FROM sqlite_schema WHERE type='table' AND name=?;", 128, &tableExists, &unused);
@@ -66,10 +81,10 @@ int main(int argc, char *argv[]) {
     returnCode = sqlite3_step(tableExists);
     
     if (returnCode == SQLITE_ROW) {
-        printf("Table found!\n");
+        // printf("Table found!\n");
     }
     else if (returnCode == SQLITE_DONE) {
-        printf("Table not found. :(\n");
+        // printf("Table not found. :(\n");
         sqlite3_prepare_v2(db, "create table main ( id INTEGER PRIMARY KEY, name TEXT, details TEXT, date TEXT );", 128, &createTable, &unused);
         returnCode = sqlite3_step(createTable);
         if (returnCode == SQLITE_DONE) {
@@ -79,12 +94,12 @@ int main(int argc, char *argv[]) {
     }
     sqlite3_finalize(tableExists);
 
-    printf("\nNumber of arguments: %d\n", argc);
+    // printf("\nNumber of arguments: %d\n", argc);
 
     if (argc > 1) {
         char* operation = argv[1];
         if (strcmp(operation, "add") == 0) {
-            printf("Add operation\n");
+            // printf("Add operation\n");
             char longStr[256] = "";
             char* toAdd[256] = {0};
             int nextIndex = 0;
@@ -100,14 +115,14 @@ int main(int argc, char *argv[]) {
             while (*comma != '\0') {
                 comma = strchrnul(&longStr[last], ',');
                 int size = comma - longStr;
-                printf("%d\n", size);
+                // printf("%d\n", size);
                 
                 char next[size+1];
                 strlcpy(next, &longStr[last], sizeof(next));
                 last = last+ size + 1;
                 // remove_leading_spaces(next);
                 printf("Adding: %s\n", next);
-                printf("Add return code: %d\n", add(db, next));
+                // printf("Add return code: %d\n", add(db, next));
                 nextIndex++;
                 // printf("Finished while cycle 3: %s, %d.\n", longStr, last);
                 // // strlcpy(longStr, &longStr[last], sizeof(longStr));
@@ -123,10 +138,16 @@ int main(int argc, char *argv[]) {
         if (strcmp(operation, "view") == 0) {
             view_all(db);
         }
-        if (strcmp(operation, "complete") == 0) {}
+        if (strcmp(operation, "complete") == 0) {
+            if (argc > 2) { // did they include an ID, or multiple?
+                for (int i = 2; i < argc; i++) {
+                    complete(db, (int) strtol(argv[i], NULL, 10));
+                }
+            }
+        }
     }
 
     sqlite3_close(db);
-    printf("Database closed\n");
+    // printf("Database closed\n");
     return 0;
 }
