@@ -17,5 +17,9 @@ task
 + details, TEXT (can be null)
 + date, TEXT (can be null). eg: "1115" for Nov 15, or "0102" for Jan 2nd
 
+## Style Guide
+- function_name()
+- variable_name
+
 ## Remember to do this
 Change app to use dynamic memory allocation

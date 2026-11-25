@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 // void remove_leading_spaces(char* string) {
 //     int i = 0;
@@ -64,6 +65,65 @@ int view_all(sqlite3* db) {
     sqlite3_finalize(view);
 
     return returnCode;
+}
+
+int format_date(time_t to_format, char buffer[7]) {
+    struct tm *t = localtime(&to_format);
+    char month[3]; char day[3]; char year[3]; // 3 bcs of end character
+
+    if ((t->tm_mon + 1) < 10) {
+        snprintf(month, sizeof(month), "0%d", (t->tm_mon+1));
+    }
+    else {
+        snprintf(month, sizeof(month), "%d", (t->tm_mon+1));
+    }
+
+    if ((t->tm_mday) < 10) {
+        snprintf(day, sizeof(day), "0%d", (t->tm_mday));
+    }
+    else {
+        snprintf(day, sizeof(day), "%d", (t->tm_mday));
+    }
+
+    if ((t->tm_year % 100) < 10) {
+        snprintf(year, sizeof(year), "0%d", (t->tm_year % 100));
+    }
+    else {
+        snprintf(year, sizeof(year), "%d", (t->tm_year % 100));
+    }
+
+    snprintf(buffer, sizeof(buffer)*7, "%s%s%s", month, day, year);
+
+    return 0;
+}
+
+time_t get_date_from_format(char* to_parse);
+
+int set_date(sqlite3* db, int taskID, char* date) { // remember to make this work even in 22nd century
+    char dateFormatted[7] = {0};
+
+    if (strcmp(date, "tdy") == 0) {
+        printf("tdy!\n");
+        format_date(time(NULL), dateFormatted);
+    }
+    else if (strcmp(date, "tmrw") == 0) {
+        format_date(time(NULL) + 1 * 24 * 60 * 60, dateFormatted);
+    }
+    // else if (strcmp(date, "010227") == 0) {
+    //     format_date(time(NULL) + 39 * 24 * 60 * 60, dateFormatted);
+    // }
+    else {
+        if (date[6] == '\0') { // is the string of the right size?
+            strlcpy(dateFormatted, date, sizeof(dateFormatted));
+        }
+        else {
+            printf("Date formatted incorrectly.\n");
+        }
+    }
+
+    printf("Formatted date: %s\n", dateFormatted);
+
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -135,14 +195,22 @@ int main(int argc, char *argv[]) {
             //     }
             // }
         }
-        if (strcmp(operation, "view") == 0) {
+        else if (strcmp(operation, "view") == 0) {
             view_all(db);
         }
-        if (strcmp(operation, "complete") == 0) {
+        else if (strcmp(operation, "complete") == 0) {
             if (argc > 2) { // did they include an ID, or multiple?
                 for (int i = 2; i < argc; i++) {
                     complete(db, (int) strtol(argv[i], NULL, 10));
                 }
+            }
+        }
+        else if (strcmp(operation, "date") == 0) {
+            if (argc == 4) { // did they include ID + a date?
+                set_date(db, (int) strtol(argv[2], NULL, 10), argv[3]);
+            }
+            else {
+                printf("Incorrect use.\n");
             }
         }
     }
